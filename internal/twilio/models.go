@@ -1,5 +1,7 @@
 package twilio
 
+import "encoding/json"
+
 type WorkFlowCongfiguration struct {
 	TaskRouting TaskRouting `json:"task_routing,omitempty"`
 }
@@ -24,4 +26,13 @@ type Targets struct {
 	Priority   *int    `json:"priority,omitempty"`
 	Expression *string `json:"expression,omitempty"`
 	SkipIf     *string `json:"skip_if,omitempty"`
+}
+
+func WorkFlowConfigurationStringToStruct(configuration string) (*WorkFlowCongfiguration, error) {
+	var workFlowCongfiguration WorkFlowCongfiguration
+	if err := json.Unmarshal([]byte(configuration), &workFlowCongfiguration); err != nil {
+		return nil, err
+	}
+
+	return &workFlowCongfiguration, nil
 }

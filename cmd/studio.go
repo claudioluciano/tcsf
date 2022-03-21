@@ -6,11 +6,14 @@ package cmd
 
 import (
 	"fmt"
-
+	"strings"
+	"twilio_copy_studio_flow/internal/config"
 	"twilio_copy_studio_flow/internal/twilio"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	openapiStudio "github.com/twilio/twilio-go/rest/studio/v2"
+	openapiTaskrouter "github.com/twilio/twilio-go/rest/taskrouter/v1"
 )
 
 // studioCmd represents the flow command
@@ -36,13 +39,13 @@ var flowCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		twClient := twilio.New()
 
-		sf, err := twClient.GetStudioFlows()
+		sourceStudioFlows, err := twClient.GetStudioFlows()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		for _, v := range sf {
+		for _, v := range sourceStudioFlows {
 			fmt.Println(`
 SID: `, *v.Sid, `
 FriendlyName: `, *v.FriendlyName, ``)
@@ -54,25 +57,147 @@ var copyFlowCmd = &cobra.Command{
 	Use:   "copy",
 	Short: "Copy a flow",
 	Run: func(cmd *cobra.Command, args []string) {
-		key := viper.GetString("sid")
-		if key == "" {
+		sflowSid := viper.GetString("sid")
+		if sflowSid == "" {
 			fmt.Println("'sid' flag is mandatory")
 			return
 		}
 
-		twClient := twilio.New()
+		var (
+			sourceTwilioClient *twilio.Twilio
+			targetTwilioClient *twilio.Twilio
+			cfg                *config.Config
+		)
+		sourceTwilioClient = twilio.New()
+		targetTwilioClient = twilio.New(true)
 
-		sf, err := twClient.GetStudioFlows()
+		cfg = config.GetConfigFromViper()
+
+		sourceStudioFlow, err := sourceTwilioClient.GetStudioFlow(sflowSid)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		for _, v := range sf {
-			fmt.Println(`
-SID: `, *v.Sid, `
-FriendlyName: `, *v.FriendlyName, ``)
+		sourceWorkflowSid, err := twilio.GetWorkFlowSIDFromFlow(sourceStudioFlow)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
+
+		sourceWorkflow, err := sourceTwilioClient.GetWorkflow(cfg.SourceWorkspace, sourceWorkflowSid)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		sourceTaskQueuesIds, err := twilio.GetTaskQueueIDFromWorkflowConfiguration(*sourceWorkflow.Configuration)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		sourceTqTargetTq := make(map[string]string)
+		for k, v := range sourceTaskQueuesIds {
+			if v != "default" {
+				tq, err := targetTwilioClient.GetTaskQueueByFriendlyName(cfg.SourceWorkspace, v)
+				if err == nil {
+					sourceTqTargetTq[k] = *tq.Sid
+					continue
+				}
+
+				if !strings.Contains(err.Error(), "not found") {
+					fmt.Println(err)
+					return
+				}
+			}
+
+			sourceTq, err := sourceTwilioClient.GetTaskQueue(cfg.SourceWorkspace, k)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			targetTq, err := targetTwilioClient.CreateTaskQueue(cfg.TargetWorkspace, &openapiTaskrouter.CreateTaskQueueParams{
+				FriendlyName:  sourceTq.FriendlyName,
+				TargetWorkers: sourceTq.TargetWorkers,
+				TaskOrder:     sourceTq.TaskOrder,
+			})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			sourceTqTargetTq[k] = *targetTq.Sid
+		}
+
+		targetWorkflowConfiguration, err := twilio.ReplaceTaskQueueSidOnConfiguration(*sourceWorkflow.Configuration, sourceTqTargetTq)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// Get target workflow
+		targetWorkflow, err := targetTwilioClient.GetWorkflowByFriendlyName(cfg.TargetWorkspace, *sourceStudioFlow.FriendlyName)
+		if err != nil {
+			if !strings.Contains(err.Error(), "could not retrieve payload from response") {
+				fmt.Println(err)
+				return
+			}
+		}
+
+		if targetWorkflow == nil {
+			targetWorkflow, err = targetTwilioClient.CreateWorkflow(cfg.TargetWorkspace, &openapiTaskrouter.CreateWorkflowParams{
+				FriendlyName:                  sourceWorkflow.FriendlyName,
+				AssignmentCallbackUrl:         sourceWorkflow.AssignmentCallbackUrl,
+				Configuration:                 &targetWorkflowConfiguration,
+				FallbackAssignmentCallbackUrl: sourceWorkflow.FallbackAssignmentCallbackUrl,
+				TaskReservationTimeout:        sourceWorkflow.TaskReservationTimeout,
+			})
+		} else {
+			targetWorkflow, err = targetTwilioClient.UpdateWorkflow(cfg.TargetWorkspace, *targetWorkflow.Sid, &openapiTaskrouter.UpdateWorkflowParams{
+				FriendlyName:                  sourceWorkflow.FriendlyName,
+				AssignmentCallbackUrl:         sourceWorkflow.AssignmentCallbackUrl,
+				Configuration:                 &targetWorkflowConfiguration,
+				FallbackAssignmentCallbackUrl: sourceWorkflow.FallbackAssignmentCallbackUrl,
+				TaskReservationTimeout:        sourceWorkflow.TaskReservationTimeout,
+			})
+		}
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		targetStudioFlow, err := targetTwilioClient.GetStudioFlowswByFriendlyName(*sourceStudioFlow.FriendlyName)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		def, err := twilio.ReplaceWorkFlowSIDFronFlowDefinition(sourceStudioFlow, *targetWorkflow.Sid)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if targetStudioFlow != nil {
+			targetStudioFlow, err = targetTwilioClient.UpdateStudioFlow(*targetStudioFlow.Sid, &openapiStudio.UpdateFlowParams{
+				FriendlyName:  sourceStudioFlow.FriendlyName,
+				CommitMessage: sourceStudioFlow.CommitMessage,
+				Status:        sourceStudioFlow.Status,
+				Definition:    &def,
+			})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+
+		targetStudioFlow, err = targetTwilioClient.CreateStudioFlow(&openapiStudio.CreateFlowParams{
+			FriendlyName:  sourceStudioFlow.FriendlyName,
+			CommitMessage: sourceStudioFlow.CommitMessage,
+			Status:        sourceStudioFlow.Status,
+			Definition:    &def,
+		})
 	},
 }
 

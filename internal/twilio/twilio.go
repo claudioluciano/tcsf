@@ -19,8 +19,12 @@ type Options struct {
 	APISecret string
 }
 
-func New() *Twilio {
+func New(targetOptions ...bool) *Twilio {
 	target := viper.GetBool("target")
+	if len(targetOptions) > 0 {
+		target = targetOptions[0]
+	}
+
 	config := config.GetConfigFromViper()
 
 	apiKey := config.SourceAPIKey
@@ -74,8 +78,27 @@ func (t *Twilio) GetStudioFlow(sid string) (*openapiStudio.StudioV2Flow, error) 
 	return sf, nil
 }
 
+func (t *Twilio) GetStudioFlowswByFriendlyName(friendlyName string) (*openapiStudio.StudioV2Flow, error) {
+	flows, err := t.GetStudioFlows()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range flows {
+		if *v.FriendlyName == friendlyName {
+			return &v, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (t *Twilio) CreateStudioFlow(params *openapiStudio.CreateFlowParams) (*openapiStudio.StudioV2Flow, error) {
 	return t.client.StudioV2.CreateFlow(params)
+}
+
+func (t *Twilio) UpdateStudioFlow(flowSid string, params *openapiStudio.UpdateFlowParams) (*openapiStudio.StudioV2Flow, error) {
+	return t.client.StudioV2.UpdateFlow(flowSid, params)
 }
 
 func (t *Twilio) GetWorkflow(workspaceSID, workFlowSid string) (*openapiTaskrouter.TaskrouterV1Workflow, error) {
@@ -96,7 +119,7 @@ func (t *Twilio) GetWorkflows(workspaceSID, workFlowSid string) ([]openapiTaskro
 	return wf, nil
 }
 
-func (t *Twilio) GetWorkflowByFriendlyName(workspaceSID, friendlyName string) ([]openapiTaskrouter.TaskrouterV1Workflow, error) {
+func (t *Twilio) GetWorkflowByFriendlyName(workspaceSID, friendlyName string) (*openapiTaskrouter.TaskrouterV1Workflow, error) {
 	wf, err := t.client.TaskrouterV1.ListWorkflow(workspaceSID, &openapiTaskrouter.ListWorkflowParams{
 		FriendlyName: &friendlyName,
 	})
@@ -104,11 +127,20 @@ func (t *Twilio) GetWorkflowByFriendlyName(workspaceSID, friendlyName string) ([
 		return nil, err
 	}
 
-	return wf, nil
+	return &wf[0], nil
 }
 
 func (t *Twilio) CreateWorkflow(workspaceSID string, params *openapiTaskrouter.CreateWorkflowParams) (*openapiTaskrouter.TaskrouterV1Workflow, error) {
 	tq, err := t.client.TaskrouterV1.CreateWorkflow(workspaceSID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return tq, nil
+}
+
+func (t *Twilio) UpdateWorkflow(workspaceSID string, workflowSID string, params *openapiTaskrouter.UpdateWorkflowParams) (*openapiTaskrouter.TaskrouterV1Workflow, error) {
+	tq, err := t.client.TaskrouterV1.UpdateWorkflow(workspaceSID, workflowSID, params)
 	if err != nil {
 		return nil, err
 	}
