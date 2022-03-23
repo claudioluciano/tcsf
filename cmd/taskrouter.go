@@ -5,51 +5,49 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
-	"twilio_copy_studio_flow/internal/twilio"
-
 	"github.com/spf13/cobra"
+
+	cmd2 "twilio_copy_studio_flow/internal/cmd"
 )
 
 // taskrouterCmd represents the taskrouter command
 var taskrouterCmd = &cobra.Command{
 	Use:     "taskrouter",
-	Short:   "Handle taskrouter task's",
-	Long:    `Handle taskrouter routine tasks`,
+	Short:   "Handle taskrouter tasks",
 	Aliases: []string{"t"},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cmd.Help(); err != nil {
-			fmt.Println("taskrouter:", err)
-			return
+			return err
 		}
+
+		return nil
 	},
 }
 
 var workspaceCmd = &cobra.Command{
 	Use:     "workspace",
-	Short:   "List workspaces",
+	Short:   "Handle taskrouter workspace tasks",
 	Aliases: []string{"w"},
-	Run: func(cmd *cobra.Command, args []string) {
-		twClient := twilio.New()
-
-		ws, err := twClient.GetWorkspaces()
-		if err != nil {
-			fmt.Println(err)
-			return
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := cmd.Help(); err != nil {
+			return err
 		}
 
-		for _, v := range ws {
-			fmt.Println(`
-SID: `, *v.Sid, `
-FriendlyName: `, *v.FriendlyName, ``)
-		}
+		return nil
 	},
+}
+
+var listWorkspaceCmd = &cobra.Command{
+	Use:     "list",
+	Short:   "List workspaces",
+	Aliases: []string{"ls"},
+	RunE:    cmd2.RunListWorkspace,
 }
 
 func init() {
 	rootCmd.AddCommand(taskrouterCmd)
 	taskrouterCmd.AddCommand(workspaceCmd)
+	workspaceCmd.AddCommand(listWorkspaceCmd)
 
-	addTargetFlag(taskrouterCmd)
+	addTargetFlag(listWorkspaceCmd)
 }

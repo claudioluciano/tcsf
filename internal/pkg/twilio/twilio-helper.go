@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-
-	openapiStudio "github.com/twilio/twilio-go/rest/studio/v2"
 )
 
-func GetWorkFlowSIDFromFlow(flow *openapiStudio.StudioV2Flow) (string, error) {
-	b, err := json.Marshal(flow.Definition)
+// WorkflowSid get the workflow sid from the flow definition
+func (f *Flow) WorkflowSid() (string, error) {
+	b, err := json.Marshal(f.Definition)
 	if err != nil {
 		fmt.Println("error", err)
 		return "", err
@@ -25,8 +24,9 @@ func GetWorkFlowSIDFromFlow(flow *openapiStudio.StudioV2Flow) (string, error) {
 	return ffs[1], nil
 }
 
-func ReplaceWorkFlowSIDFronFlowDefinition(flow *openapiStudio.StudioV2Flow, sid string) (map[string]interface{}, error) {
-	b, err := json.Marshal(flow.Definition)
+// SetWorkflowSid set the workflow sid on the flow definition
+func (f *Flow) SetWorkflowSid(sid string) (map[string]interface{}, error) {
+	b, err := json.Marshal(f.Definition)
 	if err != nil {
 		return nil, err
 	}
@@ -42,32 +42,43 @@ func ReplaceWorkFlowSIDFronFlowDefinition(flow *openapiStudio.StudioV2Flow, sid 
 	return def, nil
 }
 
-func GetTaskQueueIDFromWorkflowConfiguration(configuration string) (map[string]string, error) {
-	workFlowCongfiguration, err := WorkFlowConfigurationStringToStruct(configuration)
+// ConfigurationAsStruct convert the configuration string to struct
+func (w *Workflow) ConfigurationAsStruct() (*WorkflowCongfiguration, error) {
+	var workFlowCongfiguration WorkflowCongfiguration
+	if err := json.Unmarshal([]byte(*w.Configuration), &workFlowCongfiguration); err != nil {
+		return nil, err
+	}
+
+	return &workFlowCongfiguration, nil
+}
+
+func (w *Workflow) GetTaskQueuesSidFromConfiguration() ([]string, error) {
+	workFlowCongfiguration, err := w.ConfigurationAsStruct()
 	if err != nil {
 		return nil, err
 	}
 
-	var taskQueueID map[string]string
+	taskQueueID := []string{}
 	for _, filters := range workFlowCongfiguration.TaskRouting.Filters {
 		for _, targets := range filters.Targets {
 			if targets.Queue != nil {
-				taskQueueID[*targets.Queue] = filters.FilterFriendlyName
+				taskQueueID = append(taskQueueID, *targets.Queue)
 			}
 		}
 	}
 
 	if workFlowCongfiguration.TaskRouting.DefaultFilter != nil {
-		taskQueueID[workFlowCongfiguration.TaskRouting.DefaultFilter.Queue] = "default"
+		taskQueueID = append(taskQueueID, workFlowCongfiguration.TaskRouting.DefaultFilter.Queue)
 	}
 
 	return taskQueueID, nil
 }
 
-func ReplaceTaskQueueSidOnConfiguration(configuration string, sourceTqTargetTq map[string]string) (string, error) {
-	workFlowCongfiguration, err := WorkFlowConfigurationStringToStruct(configuration)
+// ReplaceTaskQueueSidOnConfiguration replace the task queues sid on the workflow configuration
+func (w *Workflow) ReplaceTaskQueueSidOnConfiguration(sourceTqTargetTq map[string]string) error {
+	workFlowCongfiguration, err := w.ConfigurationAsStruct()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	for _, filters := range workFlowCongfiguration.TaskRouting.Filters {
@@ -89,8 +100,16 @@ func ReplaceTaskQueueSidOnConfiguration(configuration string, sourceTqTargetTq m
 
 	b, err := json.Marshal(workFlowCongfiguration)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return string(b), nil
+	s := string(b)
+	w.Configuration = &s
+
+	return nil
+}
+
+// Equal compare two TaskQueue
+func (t *TaskQueue) Equal(tq *TaskQueue) bool {
+	return t.TaskOrder == tq.TaskOrder && t.MaxReservedWorkers == tq.MaxReservedWorkers && t.TargetWorkers == tq.TargetWorkers
 }

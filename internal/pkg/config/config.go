@@ -11,12 +11,12 @@ import (
 const configFileName = ".tcst-cli.json"
 
 type Config struct {
-	SourceAPIKey    string `survey:"source_api_key" json:"source_api_key,omitempty"`
-	SourceAPISecret string `survey:"source_api_secret" json:"source_api_secret,omitempty"`
-	SourceWorkspace string `survey:"source_workspace" json:"source_workspace,omitempty"`
-	TargetAPIKey    string `survey:"target_api_key" json:"target_api_key,omitempty"`
-	TargetAPISecret string `survey:"target_api_secret" json:"target_api_secret,omitempty"`
-	TargetWorkspace string `survey:"target_workspace" json:"target_workspace,omitempty"`
+	SourceAPIKey    string `json:"source_api_key,omitempty"`
+	SourceAPISecret string `json:"source_api_secret,omitempty"`
+	SourceWorkspace string `json:"source_workspace,omitempty"`
+	TargetAPIKey    string `json:"target_api_key,omitempty"`
+	TargetAPISecret string `json:"target_api_secret,omitempty"`
+	TargetWorkspace string `json:"target_workspace,omitempty"`
 }
 
 func GetDefaultConfigPath() (string, error) {
@@ -28,7 +28,21 @@ func GetDefaultConfigPath() (string, error) {
 	return filepath.Join(home, configFileName), nil
 }
 
-func ReadConfigFile() (string, error) {
+func ConfigExist() bool {
+	cPath, err := GetDefaultConfigPath()
+	if err != nil {
+		return false
+	}
+
+	_, err = os.Stat(cPath)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
+func ReadConfigAsString() (string, error) {
 	cPath, err := GetDefaultConfigPath()
 	if err != nil {
 		return "", err
@@ -40,6 +54,20 @@ func ReadConfigFile() (string, error) {
 	}
 
 	return string(b), nil
+}
+
+func ReadConfig(c *Config) error {
+	cPath, err := GetDefaultConfigPath()
+	if err != nil {
+		return err
+	}
+
+	b, err := os.ReadFile(cPath)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(b, c)
 }
 
 func CreateConfigFile() error {
@@ -103,4 +131,22 @@ func GetConfigFromViper() *Config {
 		TargetAPISecret: tas,
 		TargetWorkspace: tws,
 	}
+}
+
+func GetRightCredentialsFromConfig(forceTarget ...bool) (string, string) {
+	target := viper.GetBool("target")
+	if len(forceTarget) > 0 {
+		target = forceTarget[0]
+	}
+
+	config := GetConfigFromViper()
+
+	apiKey := config.SourceAPIKey
+	apiSecret := config.SourceAPISecret
+	if target {
+		apiKey = config.TargetAPIKey
+		apiSecret = config.TargetAPISecret
+	}
+
+	return apiKey, apiSecret
 }
