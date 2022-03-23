@@ -7,7 +7,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	cmd2 "twilio_copy_studio_flow/internal/cmd"
+	cmd2 "github.com/claudioluciano/tcsf/internal/cmd"
 )
 
 // taskrouterCmd represents the taskrouter command

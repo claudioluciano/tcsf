@@ -1,4 +1,4 @@
-module twilio_copy_studio_flow
+module github.com/claudioluciano/tcsf
 
 go 1.16
 

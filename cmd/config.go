@@ -5,7 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	cmd2 "twilio_copy_studio_flow/internal/cmd"
+	cmd2 "github.com/claudioluciano/tcsf/internal/cmd"
 
 	"github.com/spf13/cobra"
 )

@@ -2,8 +2,9 @@ package twilio
 
 import (
 	"strings"
-	"twilio_copy_studio_flow/internal/pkg/config"
-	twiliosdk "twilio_copy_studio_flow/internal/pkg/twilio/twilio-sdk"
+
+	"github.com/claudioluciano/tcsf/internal/pkg/config"
+	twiliosdk "github.com/claudioluciano/tcsf/internal/pkg/twilio/twilio-sdk"
 
 	openapiStudio "github.com/twilio/twilio-go/rest/studio/v2"
 	openapiTaskrouter "github.com/twilio/twilio-go/rest/taskrouter/v1"

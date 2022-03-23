@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"twilio_copy_studio_flow/internal/pkg/config"
+
+	"github.com/claudioluciano/tcsf/internal/pkg/config"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"

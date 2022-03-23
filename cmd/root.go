@@ -17,7 +17,7 @@ import (
 var (
 	cfgFile string
 	rootCmd = &cobra.Command{
-		Use:   "twilio_copy_studio_flow",
+		Use:   "github.com/claudioluciano/tcsf",
 		Short: "",
 		Long:  ``,
 	}

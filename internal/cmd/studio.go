@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"twilio_copy_studio_flow/internal/pkg/config"
-	"twilio_copy_studio_flow/internal/pkg/twilio"
+
+	"github.com/claudioluciano/tcsf/internal/pkg/config"
+	"github.com/claudioluciano/tcsf/internal/pkg/twilio"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
