@@ -26,6 +26,9 @@ var (
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	rootCmd.PersistentFlags().Bool("target", false, "Use target credentials")
+	_ = viper.BindPFlag("target", rootCmd.PersistentFlags().Lookup("target"))
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println()
 		log.Fatal(err)
@@ -56,9 +59,4 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("using config file:", viper.ConfigFileUsed())
 	}
-}
-
-func addTargetFlag(cmd *cobra.Command) {
-	cmd.Flags().Bool("target", false, "Use target credentials")
-	_ = viper.BindPFlag("target", cmd.Flags().Lookup("target"))
 }

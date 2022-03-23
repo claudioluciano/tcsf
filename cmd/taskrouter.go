@@ -48,6 +48,4 @@ func init() {
 	rootCmd.AddCommand(taskrouterCmd)
 	taskrouterCmd.AddCommand(workspaceCmd)
 	workspaceCmd.AddCommand(listWorkspaceCmd)
-
-	addTargetFlag(listWorkspaceCmd)
 }

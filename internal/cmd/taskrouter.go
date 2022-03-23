@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// RunListWorkspace lists all workspaces
 func RunListWorkspace(cmd *cobra.Command, args []string) error {
 	twClient := twilio.New()
 

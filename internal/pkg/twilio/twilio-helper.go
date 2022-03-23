@@ -2,7 +2,6 @@ package twilio
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 )
 
@@ -10,14 +9,12 @@ import (
 func (f *Flow) WorkflowSid() (string, error) {
 	b, err := json.Marshal(f.Definition)
 	if err != nil {
-		fmt.Println("error", err)
 		return "", err
 	}
 
 	r, _ := regexp.Compile(`"workflow":"([a-zA-Z0-9]+)"`)
 	ffs := r.FindStringSubmatch(string(b))
 	if len(ffs) < 1 {
-		fmt.Println("error flow without workflow, try put a workflow on the send to flex widget: source account")
 		return "", err
 	}
 

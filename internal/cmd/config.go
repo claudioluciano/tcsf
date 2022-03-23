@@ -46,6 +46,7 @@ type surveyConfig struct {
 	TargetWorkspace string `survey:"target_workspace"`
 }
 
+// RunInitConfig initializes the config file
 func RunInitConfig(cmd *cobra.Command, args []string) error {
 	sConf := surveyConfig{}
 	err := survey.Ask(qs, &sConf)
@@ -105,6 +106,7 @@ func RunInitConfig(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// RunCatConfig prints the config file
 func RunCatConfig(cmd *cobra.Command, args []string) error {
 	conf, err := config.ReadConfigAsString()
 	if err != nil {

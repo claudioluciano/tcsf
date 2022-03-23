@@ -134,7 +134,7 @@ func GetConfigFromViper() *Config {
 }
 
 func GetRightCredentialsFromConfig(forceTarget ...bool) (string, string) {
-	target := viper.GetBool("target")
+	target := false
 	if len(forceTarget) > 0 {
 		target = forceTarget[0]
 	}

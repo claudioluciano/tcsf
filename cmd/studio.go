@@ -62,17 +62,14 @@ var copyFlowCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(studioCmd)
 	studioCmd.AddCommand(flowCmd)
+
 	flowCmd.AddCommand(listflowCmd)
 	flowCmd.AddCommand(copyFlowCmd)
-
-	copyFlowCmd.Flags().String("sid", "", "SID of the flow to copy")
-	copyFlowCmd.MarkFlagRequired("sid")
-	_ = viper.BindPFlag("sid", copyFlowCmd.Flags().Lookup("sid"))
 
 	listflowCmd.Flags().String("name", "", "Name of the flow to search")
 	_ = viper.BindPFlag("name", listflowCmd.Flags().Lookup("name"))
 
-	addTargetFlag(studioCmd)
-	addTargetFlag(listflowCmd)
-	addTargetFlag(copyFlowCmd)
+	copyFlowCmd.Flags().String("sid", "", "SID of the flow to copy")
+	copyFlowCmd.MarkFlagRequired("sid")
+	_ = viper.BindPFlag("sid", copyFlowCmd.Flags().Lookup("sid"))
 }
