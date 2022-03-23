@@ -90,7 +90,7 @@ func RunCopyFlow(cmd *cobra.Command, args []string) error {
 
 		targetTq, err := targetTwilioClient.FetchTaskQueueByFriendlyName(cfg.TargetWorkspace, *sourceTq.FriendlyName)
 		if err != nil {
-			if !strings.Contains(err.Error(), "not found") {
+			if checkErrorTwilioNotFound(err) {
 				return err
 			}
 
@@ -125,10 +125,9 @@ func RunCopyFlow(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Get target workflow
 	targetWorkflow, err := targetTwilioClient.FetchWorkflowByFriendlyName(cfg.TargetWorkspace, *sourceWorkflow.FriendlyName)
 	if err != nil {
-		if !strings.Contains(err.Error(), "could not retrieve payload from response") {
+		if checkErrorTwilioNotFound(err) {
 			return err
 		}
 
@@ -157,9 +156,10 @@ func RunCopyFlow(cmd *cobra.Command, args []string) error {
 
 	targetStudioFlow, err := targetTwilioClient.FetchFlowByFriendlyName(*sourceStudioFlow.FriendlyName)
 	if err != nil {
-		if !strings.Contains(err.Error(), "could not retrieve payload from response") {
+		if checkErrorTwilioNotFound(err) {
 			return err
 		}
+
 		targetStudioFlow, err = targetTwilioClient.CreateFlow(&openapiStudio.CreateFlowParams{
 			FriendlyName:  sourceStudioFlow.FriendlyName,
 			CommitMessage: sourceStudioFlow.CommitMessage,
@@ -181,4 +181,8 @@ func RunCopyFlow(cmd *cobra.Command, args []string) error {
 	})
 
 	return nil
+}
+
+func checkErrorTwilioNotFound(err error) bool {
+	return !strings.Contains(err.Error(), "could not retrieve payload from response") && !strings.Contains(err.Error(), "not found")
 }
