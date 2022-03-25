@@ -24,7 +24,7 @@ func RunListWorkspace(cmd *cobra.Command, args []string) error {
 		fmt.Println(`
 SID: `, *v.Sid, `
 FriendlyName: `, *v.FriendlyName, `
-URL: `, *v.URL, ``)
+URL: `, v.URL, ``)
 	}
 
 	return nil
@@ -42,7 +42,7 @@ func RunListWorkflow(cmd *cobra.Command, args []string) error {
 
 	var err error
 	if name != "" {
-		workflows, err = twClient.ListWorkFlowByFriendlyName(cfg.SourceWorkspace, name)
+		workflows, err = twClient.ListWorkflowByFriendlyName(cfg.SourceWorkspace, name)
 	} else {
 		workflows, err = twClient.ListWorkflow(cfg.SourceWorkspace)
 	}
@@ -54,7 +54,7 @@ func RunListWorkflow(cmd *cobra.Command, args []string) error {
 		fmt.Println(`
 SID: `, *v.Sid, `
 FriendlyName: `, *v.FriendlyName, `
-URL: `, *v.URL, ``)
+URL: `, v.URL, ``)
 	}
 
 	return nil

@@ -1,10 +1,10 @@
 package twilio
 
 import (
-	"strings"
-
 	"github.com/claudioluciano/tcsf/internal/pkg/config"
 	twiliosdk "github.com/claudioluciano/tcsf/internal/pkg/twilio/twilio-sdk"
+	urlHelper "github.com/claudioluciano/tcsf/internal/pkg/twilio/url"
+	"github.com/claudioluciano/tcsf/internal/pkg/utils"
 
 	openapiStudio "github.com/twilio/twilio-go/rest/studio/v2"
 	openapiTaskrouter "github.com/twilio/twilio-go/rest/taskrouter/v1"
@@ -47,7 +47,7 @@ func (t *Twilio) ListWorkspace() ([]*Workspace, error) {
 		wss = append(wss, &Workspace{
 			Sid:          v.Sid,
 			FriendlyName: v.FriendlyName,
-			URL:          v.Url,
+			URL:          urlHelper.BuildWorkspaceConsoleURL(*v.Sid),
 		})
 	}
 
@@ -67,7 +67,7 @@ func (t *Twilio) ListFlow() ([]*Flow, error) {
 			FriendlyName:  v.FriendlyName,
 			CommitMessage: v.CommitMessage,
 			Definition:    v.Definition,
-			URL:           v.Url,
+			URL:           urlHelper.BuildFlowConsoleURL(*v.Sid),
 		})
 	}
 
@@ -85,7 +85,7 @@ func (t *Twilio) FetchFlow(sid string) (*Flow, error) {
 		FriendlyName:  sf.FriendlyName,
 		CommitMessage: sf.CommitMessage,
 		Definition:    sf.Definition,
-		URL:           sf.Url,
+		URL:           urlHelper.BuildFlowConsoleURL(*sf.Sid),
 	}, nil
 }
 
@@ -112,7 +112,7 @@ func (t *Twilio) ListFlowByFriendlyName(friendlyName string) ([]*Flow, error) {
 
 	ff := []*Flow{}
 	for _, v := range flows {
-		if strings.Contains(*v.FriendlyName, friendlyName) {
+		if utils.StringContains(*v.FriendlyName, friendlyName) {
 			ff = append(ff, v)
 		}
 	}
@@ -131,7 +131,7 @@ func (t *Twilio) CreateFlow(params *openapiStudio.CreateFlowParams) (*Flow, erro
 		FriendlyName:  sf.FriendlyName,
 		CommitMessage: sf.CommitMessage,
 		Definition:    sf.Definition,
-		URL:           sf.Url,
+		URL:           urlHelper.BuildFlowConsoleURL(*sf.Sid),
 	}, nil
 }
 
@@ -146,7 +146,7 @@ func (t *Twilio) UpdateFlow(sid string, params *openapiStudio.UpdateFlowParams) 
 		FriendlyName:  sf.FriendlyName,
 		CommitMessage: sf.CommitMessage,
 		Definition:    sf.Definition,
-		URL:           sf.Url,
+		URL:           urlHelper.BuildFlowConsoleURL(*sf.Sid),
 	}, nil
 }
 
@@ -159,13 +159,16 @@ func (t *Twilio) FetchWorkflow(WorkspaceSid, Sid string) (*Workflow, error) {
 	return &Workflow{
 		Sid:           wf.Sid,
 		FriendlyName:  wf.FriendlyName,
-		URL:           wf.Url,
 		Configuration: wf.Configuration,
+		URL:           urlHelper.BuildWorkflowConsoleURL(WorkspaceSid, *wf.Sid),
 	}, nil
 }
 
 func (t *Twilio) ListWorkflow(WorkspaceSid string) ([]*Workflow, error) {
-	wf, err := t.api.ListWorkflow(WorkspaceSid, nil)
+	ps := 1000
+	wf, err := t.api.ListWorkflow(WorkspaceSid, &openapiTaskrouter.ListWorkflowParams{
+		PageSize: &ps,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -175,15 +178,15 @@ func (t *Twilio) ListWorkflow(WorkspaceSid string) ([]*Workflow, error) {
 		wff = append(wff, &Workflow{
 			Sid:           v.Sid,
 			FriendlyName:  v.FriendlyName,
-			URL:           v.Url,
 			Configuration: v.Configuration,
+			URL:           urlHelper.BuildWorkflowConsoleURL(WorkspaceSid, *v.Sid),
 		})
 	}
 
 	return wff, nil
 }
 
-func (t *Twilio) ListWorkFlowByFriendlyName(WorkspaceSid, friendlyName string) ([]*Workflow, error) {
+func (t *Twilio) ListWorkflowByFriendlyName(WorkspaceSid, friendlyName string) ([]*Workflow, error) {
 	wf, err := t.ListWorkflow(WorkspaceSid)
 	if err != nil {
 		return nil, err
@@ -191,7 +194,8 @@ func (t *Twilio) ListWorkFlowByFriendlyName(WorkspaceSid, friendlyName string) (
 
 	wff := []*Workflow{}
 	for _, v := range wf {
-		if strings.Contains(*v.FriendlyName, friendlyName) {
+		if utils.StringContains(*v.FriendlyName, friendlyName) {
+			v.URL = urlHelper.BuildWorkflowConsoleURL(WorkspaceSid, *v.Sid)
 			wff = append(wff, v)
 		}
 	}
@@ -200,22 +204,22 @@ func (t *Twilio) ListWorkFlowByFriendlyName(WorkspaceSid, friendlyName string) (
 }
 
 func (t *Twilio) FetchWorkflowByFriendlyName(WorkspaceSid, friendlyName string) (*Workflow, error) {
-	wf, err := t.api.ListWorkflow(WorkspaceSid, &openapiTaskrouter.ListWorkflowParams{
+	lwf, err := t.api.ListWorkflow(WorkspaceSid, &openapiTaskrouter.ListWorkflowParams{
 		FriendlyName: &friendlyName,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if len(wf) <= 0 {
+	if len(lwf) <= 0 {
 		return nil, newError(HTTPCodeNotFound, "Workflow not found")
 	}
-
+	wf := lwf[0]
 	return &Workflow{
-		Sid:           wf[0].Sid,
-		FriendlyName:  wf[0].FriendlyName,
-		URL:           wf[0].Url,
-		Configuration: wf[0].Configuration,
+		Sid:           wf.Sid,
+		FriendlyName:  wf.FriendlyName,
+		Configuration: wf.Configuration,
+		URL:           urlHelper.BuildWorkflowConsoleURL(WorkspaceSid, *wf.Sid),
 	}, nil
 }
 
@@ -228,8 +232,8 @@ func (t *Twilio) CreateWorkflow(WorkspaceSid string, params *openapiTaskrouter.C
 	return &Workflow{
 		Sid:           wf.Sid,
 		FriendlyName:  wf.FriendlyName,
-		URL:           wf.Url,
 		Configuration: wf.Configuration,
+		URL:           urlHelper.BuildWorkflowConsoleURL(WorkspaceSid, *wf.Sid),
 	}, nil
 }
 
@@ -242,8 +246,8 @@ func (t *Twilio) UpdateWorkflow(WorkspaceSid string, Sid string, params *openapi
 	return &Workflow{
 		Sid:           wf.Sid,
 		FriendlyName:  wf.FriendlyName,
-		URL:           wf.Url,
 		Configuration: wf.Configuration,
+		URL:           urlHelper.BuildWorkflowConsoleURL(WorkspaceSid, *wf.Sid),
 	}, nil
 }
 
@@ -256,32 +260,33 @@ func (t *Twilio) FetchTaskQueue(WorkspaceSid, Sid string) (*TaskQueue, error) {
 	return &TaskQueue{
 		Sid:                tq.Sid,
 		FriendlyName:       tq.FriendlyName,
-		URL:                tq.Url,
 		MaxReservedWorkers: tq.MaxReservedWorkers,
 		TaskOrder:          tq.TaskOrder,
 		TargetWorkers:      tq.TargetWorkers,
+		URL:                urlHelper.BuildTaskQueueConsoleURL(WorkspaceSid, *tq.Sid),
 	}, nil
 }
 
 func (t *Twilio) FetchTaskQueueByFriendlyName(WorkspaceSid, friendlyName string) (*TaskQueue, error) {
-	tq, err := t.api.ListTaskQueue(WorkspaceSid, &openapiTaskrouter.ListTaskQueueParams{
+	ltq, err := t.api.ListTaskQueue(WorkspaceSid, &openapiTaskrouter.ListTaskQueueParams{
 		FriendlyName: &friendlyName,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if len(tq) <= 0 {
+	if len(ltq) <= 0 {
 		return nil, newError(HTTPCodeNotFound, "TaskQueue not found")
 	}
 
+	tq := ltq[0]
 	return &TaskQueue{
-		Sid:                tq[0].Sid,
-		FriendlyName:       tq[0].FriendlyName,
-		URL:                tq[0].Url,
-		MaxReservedWorkers: tq[0].MaxReservedWorkers,
-		TaskOrder:          tq[0].TaskOrder,
-		TargetWorkers:      tq[0].TargetWorkers,
+		Sid:                tq.Sid,
+		FriendlyName:       tq.FriendlyName,
+		MaxReservedWorkers: tq.MaxReservedWorkers,
+		TaskOrder:          tq.TaskOrder,
+		TargetWorkers:      tq.TargetWorkers,
+		URL:                urlHelper.BuildTaskQueueConsoleURL(WorkspaceSid, *tq.Sid),
 	}, nil
 }
 
@@ -294,10 +299,10 @@ func (t *Twilio) CreateTaskQueue(WorkspaceSid string, params *openapiTaskrouter.
 	return &TaskQueue{
 		Sid:                tq.Sid,
 		FriendlyName:       tq.FriendlyName,
-		URL:                tq.Url,
 		MaxReservedWorkers: tq.MaxReservedWorkers,
 		TaskOrder:          tq.TaskOrder,
 		TargetWorkers:      tq.TargetWorkers,
+		URL:                urlHelper.BuildTaskQueueConsoleURL(WorkspaceSid, *tq.Sid),
 	}, nil
 }
 
@@ -310,9 +315,9 @@ func (t *Twilio) UpdateTaskQueue(WorkspaceSid string, Sid string, params *openap
 	return &TaskQueue{
 		Sid:                tq.Sid,
 		FriendlyName:       tq.FriendlyName,
-		URL:                tq.Url,
 		MaxReservedWorkers: tq.MaxReservedWorkers,
 		TaskOrder:          tq.TaskOrder,
 		TargetWorkers:      tq.TargetWorkers,
+		URL:                urlHelper.BuildTaskQueueConsoleURL(WorkspaceSid, *tq.Sid),
 	}, nil
 }

@@ -40,7 +40,7 @@ func RunListFlow(cmd *cobra.Command, args []string) (err error) {
 		fmt.Println(`
 SID: `, *v.Sid, `
 FriendlyName: `, *v.FriendlyName, `
-URL: `, *v.URL, ``)
+URL: `, v.URL, ``)
 	}
 
 	return nil
@@ -220,7 +220,7 @@ func RunCopyFlow(cmd *cobra.Command, args []string) error {
 Flow Created with success:
 SID: `, *targetStudioFlow.Sid, `
 FriendlyName: `, *targetStudioFlow.FriendlyName, `
-URL: `, *targetStudioFlow.URL, ``)
+URL: `, targetStudioFlow.URL, ``)
 
 		return nil
 	}
@@ -237,7 +237,7 @@ URL: `, *targetStudioFlow.URL, ``)
 Flow Updated with success:
 SID: `, *targetStudioFlow.Sid, `
 FriendlyName: `, *targetStudioFlow.FriendlyName, `
-URL: `, *targetStudioFlow.URL, ``)
+URL: `, targetStudioFlow.URL, ``)
 
 	return nil
 }
