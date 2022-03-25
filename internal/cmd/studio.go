@@ -19,8 +19,9 @@ var (
 
 // RunListFlow lists all flows
 func RunListFlow(cmd *cobra.Command, args []string) (err error) {
+	target := viper.GetBool("target")
 	var (
-		twClient = twilio.New()
+		twClient = twilio.New(target)
 		name     = viper.GetString("name")
 		flows    []*twilio.Flow
 	)
@@ -55,7 +56,7 @@ func RunCopyFlow(cmd *cobra.Command, args []string) error {
 		sflowSid           = viper.GetString("sid")
 		sourceTwilioClient = twilio.New(target)
 		targetTwilioClient = twilio.New(!target)
-		cfg                = config.GetConfigFromViper()
+		cfg                = config.GetConfigFromViper(target)
 	)
 
 	// Get the source flow

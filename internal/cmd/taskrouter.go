@@ -6,11 +6,14 @@ import (
 	"github.com/claudioluciano/tcsf/internal/pkg/twilio"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // RunListWorkspace lists all workspaces
 func RunListWorkspace(cmd *cobra.Command, args []string) error {
-	twClient := twilio.New()
+	target := viper.GetBool("target")
+
+	twClient := twilio.New(target)
 
 	ws, err := twClient.ListWorkspace()
 	if err != nil {

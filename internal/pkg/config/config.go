@@ -102,34 +102,46 @@ func UpdateConfigFile(config *Config) error {
 	return nil
 }
 
-func GetConfigFromViper() *Config {
-	sak := viper.GetString("source_api_key")
-	sas := viper.GetString("source_api_secret")
-	sws := viper.GetString("source_workspace")
-
-	tak := viper.GetString("target_api_key")
-	tas := viper.GetString("target_api_secret")
-	tws := viper.GetString("target_workspace")
-
-	if tas == "" {
-		tas = sas
+func GetConfigFromViper(forceTarget ...bool) *Config {
+	target := false
+	if len(forceTarget) > 0 {
+		target = forceTarget[0]
 	}
 
-	if tak == "" {
-		tak = sak
+	sourceAPIKey := viper.GetString("source_api_key")
+	sourceAPISecret := viper.GetString("source_api_secret")
+	sourceWorkspace := viper.GetString("source_workspace")
+	targetAPIKey := viper.GetString("target_api_key")
+	targetAPISecret := viper.GetString("target_api_secret")
+	targetWorkspace := viper.GetString("target_workspace")
+
+	if targetAPIKey == "" || targetAPISecret == "" || targetWorkspace == "" {
+		targetAPIKey = sourceAPIKey
+		targetAPISecret = sourceAPISecret
+		targetWorkspace = sourceWorkspace
 	}
 
-	if tws == "" {
-		tws = sws
+	if target {
+		tempAPIKey := targetAPIKey
+		tempAPISecret := targetAPISecret
+		tempWorkspace := targetWorkspace
+
+		targetAPIKey = sourceAPIKey
+		targetAPISecret = sourceAPISecret
+		targetWorkspace = sourceWorkspace
+
+		sourceAPIKey = tempAPIKey
+		sourceAPISecret = tempAPISecret
+		sourceWorkspace = tempWorkspace
 	}
 
 	return &Config{
-		SourceAPIKey:    sak,
-		SourceAPISecret: sas,
-		SourceWorkspace: sws,
-		TargetAPIKey:    tak,
-		TargetAPISecret: tas,
-		TargetWorkspace: tws,
+		SourceAPIKey:    sourceAPIKey,
+		SourceAPISecret: sourceAPISecret,
+		SourceWorkspace: sourceWorkspace,
+		TargetAPIKey:    targetAPIKey,
+		TargetAPISecret: targetAPISecret,
+		TargetWorkspace: targetWorkspace,
 	}
 }
 
@@ -139,14 +151,9 @@ func GetRightCredentialsFromConfig(forceTarget ...bool) (string, string) {
 		target = forceTarget[0]
 	}
 
-	config := GetConfigFromViper()
+	config := GetConfigFromViper(target)
 
 	apiKey := config.SourceAPIKey
 	apiSecret := config.SourceAPISecret
-	if target {
-		apiKey = config.TargetAPIKey
-		apiSecret = config.TargetAPISecret
-	}
-
 	return apiKey, apiSecret
 }
