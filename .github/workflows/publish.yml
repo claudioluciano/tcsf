@@ -20,7 +20,7 @@ jobs:
             artifact_name: mything
 
     steps:
-     - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
     - name: Set up Go
       uses: actions/setup-go@v2
