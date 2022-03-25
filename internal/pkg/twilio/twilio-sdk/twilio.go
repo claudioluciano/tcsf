@@ -31,7 +31,7 @@ type TwilioApi interface {
 }
 
 func New(username, password string) TwilioApi {
-	client := sdktwilio.NewRestClientWithParams(sdktwilio.RestClientParams{
+	client := sdktwilio.NewRestClientWithParams(sdktwilio.ClientParams{
 		Username: username,
 		Password: password,
 	})

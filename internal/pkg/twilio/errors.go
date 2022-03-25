@@ -29,6 +29,13 @@ func httpCodeFromError(err error) HTTPCode {
 	}
 }
 
+func newError(code HTTPCode, msg string) error {
+	return &twilioClient.TwilioRestError{
+		Status:  int(code),
+		Message: msg,
+	}
+}
+
 // Ok returns true if the error is nil or the error is a TwilioRestError with a status code of 200
 func Ok(err error) bool {
 	return httpCodeFromError(err) == HTTPCodeOK

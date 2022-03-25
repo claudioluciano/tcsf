@@ -101,7 +101,7 @@ func (t *Twilio) FetchFlowByFriendlyName(friendlyName string) (*Flow, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, newError(HTTPCodeNotFound, "Flow not found")
 }
 
 func (t *Twilio) ListFlowByFriendlyName(friendlyName string) ([]*Flow, error) {
@@ -192,7 +192,7 @@ func (t *Twilio) FetchWorkflowByFriendlyName(WorkspaceSid, friendlyName string) 
 	}
 
 	if len(wf) <= 0 {
-		return nil, nil
+		return nil, newError(HTTPCodeNotFound, "Workflow not found")
 	}
 
 	return &Workflow{
@@ -256,7 +256,7 @@ func (t *Twilio) FetchTaskQueueByFriendlyName(WorkspaceSid, friendlyName string)
 	}
 
 	if len(tq) <= 0 {
-		return nil, nil
+		return nil, newError(HTTPCodeNotFound, "TaskQueue not found")
 	}
 
 	return &TaskQueue{
