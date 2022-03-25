@@ -11,7 +11,7 @@ import (
 
 const (
 	// Version is the version of the CLI
-	Version = "0.1.0"
+	Version = "0.0.1"
 )
 
 // rootCmd represents the base command when called without any subcommands
