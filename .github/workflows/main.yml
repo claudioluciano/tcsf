@@ -1,0 +1,40 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: docker://mattdsteele/particle-github-action:latest
+            artifact_name: tcsf
+          - os: windows-latest
+            artifact_name: tcsf.exe
+          - os: macos-latest
+            artifact_name: mything
+
+    steps:
+     - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Upload binaries to release
+      uses: ssoftprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: target/release/${{ matrix.artifact_name }}
+        name: ${{ github.ref }}
+      
+      
