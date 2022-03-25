@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
@@ -13,13 +9,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	// Version is the version of the CLI
+	Version = "0.1.0"
+)
+
 // rootCmd represents the base command when called without any subcommands
 var (
 	cfgFile string
 	rootCmd = &cobra.Command{
-		Use:   "github.com/claudioluciano/tcsf",
-		Short: "",
-		Long:  ``,
+		Version: Version,
+		Use:     "github.com/claudioluciano/tcsf",
+		Short:   "",
+		Long:    ``,
 	}
 )
 
