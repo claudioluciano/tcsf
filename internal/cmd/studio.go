@@ -19,8 +19,8 @@ var (
 
 // RunListFlow lists all flows
 func RunListFlow(cmd *cobra.Command, args []string) (err error) {
-	target := viper.GetBool("target")
 	var (
+		target   = viper.GetBool("target")
 		twClient = twilio.New(target)
 		name     = viper.GetString("name")
 		flows    []*twilio.Flow
@@ -49,10 +49,9 @@ URL: `, *v.URL, ``)
 // RunCopyFlow copies a flow
 func RunCopyFlow(cmd *cobra.Command, args []string) error {
 	// Here we get the flag target to know if we need to invert the credentials
-	target := viper.GetBool("target")
 	// If target is true, we will use the credentials from the target as the source otherwise we will use the credentials from the source
-
 	var (
+		target             = viper.GetBool("target")
 		sflowSid           = viper.GetString("sid")
 		sourceTwilioClient = twilio.New(target)
 		targetTwilioClient = twilio.New(!target)

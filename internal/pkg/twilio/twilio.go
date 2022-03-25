@@ -164,20 +164,36 @@ func (t *Twilio) FetchWorkflow(WorkspaceSid, Sid string) (*Workflow, error) {
 	}, nil
 }
 
-func (t *Twilio) ListWorkflow(WorkspaceSid string) ([]Workflow, error) {
+func (t *Twilio) ListWorkflow(WorkspaceSid string) ([]*Workflow, error) {
 	wf, err := t.api.ListWorkflow(WorkspaceSid, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	wff := []Workflow{}
+	wff := []*Workflow{}
 	for _, v := range wf {
-		wff = append(wff, Workflow{
+		wff = append(wff, &Workflow{
 			Sid:           v.Sid,
 			FriendlyName:  v.FriendlyName,
 			URL:           v.Url,
 			Configuration: v.Configuration,
 		})
+	}
+
+	return wff, nil
+}
+
+func (t *Twilio) ListWorkFlowByFriendlyName(WorkspaceSid, friendlyName string) ([]*Workflow, error) {
+	wf, err := t.ListWorkflow(WorkspaceSid)
+	if err != nil {
+		return nil, err
+	}
+
+	wff := []*Workflow{}
+	for _, v := range wf {
+		if strings.Contains(*v.FriendlyName, friendlyName) {
+			wff = append(wff, v)
+		}
 	}
 
 	return wff, nil
