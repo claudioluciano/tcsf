@@ -115,9 +115,14 @@ func GetConfigFromViper(forceTarget ...bool) *Config {
 	targetAPISecret := viper.GetString("target_api_secret")
 	targetWorkspace := viper.GetString("target_workspace")
 
-	if targetAPIKey == "" || targetAPISecret == "" || targetWorkspace == "" {
+	if targetAPIKey == "" {
 		targetAPIKey = sourceAPIKey
+	}
+	if targetAPISecret == "" {
 		targetAPISecret = sourceAPISecret
+	}
+
+	if targetWorkspace == "" {
 		targetWorkspace = sourceWorkspace
 	}
 
